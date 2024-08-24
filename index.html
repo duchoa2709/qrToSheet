@@ -1,44 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner hehe</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>QR Code Scanner</title>
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    <style>
+        #preview {
+            width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="items-center">
-            <h1>Dev: Duc Hoa</h1>
-            <video id="preview"></video>
-            <button onclick="stopScanner()">Dừng quét</button>
-        </div>
-    </div>
+    <h1>QR Code Scanner</h1>
+    <video id="preview"></video>
+    <select id="cameraSelect"></select>
+    <button onclick="stopScanner()">Dừng quét</button>
+    <button onclick="changeCamera()">Đổi camera</button>
 
     <script>
         let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+        let currentCameraIndex = 0;
+        let cameras = [];
+
         scanner.addListener('scan', function (content) {
             console.log(content);
             sendDataToSheet(content);
         });
 
-        Instascan.Camera.getCameras().then(function (cameras) {
-            if (cameras.length > 0) {
-                scanner.start(cameras[0]);
-            } else {
-                console.error('No cameras found.');
-            }
-        }).catch(function (e) {
-            console.error(e);
-        });
+        // Hàm khởi tạo camera
+        function initCamera() {
+            Instascan.Camera.getCameras().then(function (availableCameras) {
+                cameras = availableCameras;
+                if (cameras.length > 0) {
+                    let cameraSelect = document.getElementById('cameraSelect');
+                    cameraSelect.innerHTML = '';
+                    cameras.forEach((camera, index) => {
+                        let option = document.createElement('option');
+                        option.value = index;
+                        option.text = camera.name || `Camera ${index + 1}`;
+                        cameraSelect.appendChild(option);
+                    });
+                    startScanner(cameras[currentCameraIndex]);
+                } else {
+                    console.error('No cameras found.');
+                }
+            }).catch(function (e) {
+                console.error(e);
+            });
+        }
 
+        // Hàm bắt đầu quét với camera
+        function startScanner(camera) {
+            scanner.start(camera).then(() => {
+                console.log('Camera started');
+            }).catch(e => {
+                console.error('Error starting camera:', e);
+            });
+        }
+
+        // Hàm dừng quét
         function stopScanner() {
             scanner.stop();
         }
 
+        // Hàm đổi camera
+        function changeCamera() {
+            if (cameras.length > 0) {
+                currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+                stopScanner();
+                startScanner(cameras[currentCameraIndex]);
+            }
+        }
+
+        // Hàm gửi dữ liệu đến Google Sheets
         function sendDataToSheet(data) {
             fetch('https://script.google.com/macros/s/AKfycbxid2Yst-8ZVg2_4wxFp6PMM4YFvSyat1jRcXc9Hq7EJcvQcl-XfmsrnMWooSYoAyrl/exec', {
                 method: 'POST',
@@ -48,12 +84,13 @@
                 body: 'data=' + encodeURIComponent(data),
                 mode: 'cors'
             })
-                .then(response => response.text())
-                .then(result => console.log(result))
-                .catch(error => console.error('Error:', error));
+            .then(response => response.text())
+            .then(result => console.log(result))
+            .catch(error => console.error('Error:', error));
         }
 
+        // Khởi tạo camera khi trang tải
+        window.onload = initCamera;
     </script>
 </body>
-
 </html>
