@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>QR Code Scanner</title>
+=======
+    <title>QR Code Scanner hehe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+>>>>>>> d78d10d64ad1402cda5d8ad06e4bc9c45e6043b2
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
     <style>
         #preview {
@@ -88,6 +93,21 @@
             .then(result => console.log(result))
             .catch(error => console.error('Error:', error));
         }
+        function startScanner(camera) {
+            scanner.start(camera).then(() => {
+                console.log('Camera started');
+                if (camera.name && camera.name.includes('Back')) {
+                    // Xoay video 180 độ nếu là camera sau
+                    document.getElementById('preview').style.transform = 'rotate(180deg)';
+                } else {
+                    // Đặt về mặc định nếu không phải camera sau
+                    document.getElementById('preview').style.transform = 'none';
+                }
+            }).catch(e => {
+                console.error('Error starting camera:', e);
+            });
+        }
+
 
         // Khởi tạo camera khi trang tải
         window.onload = initCamera;
